@@ -42,7 +42,7 @@ function resetSession(dialogflowRequest, res) {
         uri: apiUrl + '/reset-session/',
         method: 'DELETE',
         qs: {
-            'sessionId': dialogflowRequest.sessionId
+            'sessionId': dialogflowRequest.session
         },
         headers: {
             'Content-Type': 'application/json'
@@ -70,7 +70,7 @@ function diagnose(dialogflowRequest, res) {
         uri: apiUrl + '/diagnose/',
         method: 'GET',
         qs: {
-            'sessionId': dialogflowRequest.sessionId
+            'sessionId': dialogflowRequest.session
         },
         headers: {
             'Content-Type': 'application/json'
