@@ -119,6 +119,67 @@ function learnMore(dialogflowRequest, res) {
     })
 }
 
+function callDoctor(dialogflowRequest, res) {
+    var requestOptions = {
+        uri: "https://api.homedoc.fr/getConnectedDoctors",
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+    request(requestOptions, function(error, response) {
+        console.log('RESPONSE:');
+        var result = JSON.parse(response.body);
+        console.log(result.connected.length);
+        var items = [];
+        for (var i = 0; i < result.connected.length; i++) {
+
+            items.push({
+                optionInfo: {
+                    "key": result.connected[i]._id,
+                    "synonyms": [
+                    ]
+                },
+                description: "test",
+                image: {
+                    "url": "https://www.homedoc.fr/icone_docteur.png",
+                    "accessibilityText": "Image alternate text"
+                },
+                title: "Docteur " + result.connected[i].lastname + " " + result.connected[i].firstname
+            });
+        }
+        res.send(JSON.stringify({
+            "payload": {
+                "google": {
+                    "expectUserResponse": true,
+                    "systemIntent": {
+                        "intent": "actions.intent.OPTION",
+                        "data": {
+                            "@type": "type.googleapis.com/google.actions.v2.OptionValueSpec",
+                            "listSelect": {
+                                "items": items
+                            }
+                        }
+                    },
+                    "richResponse": {
+                        "items": [
+                            {
+                                "simpleResponse": {
+                                    "textToSpeech": "Voici une liste de médecins disponibles"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+
+
+
+        }))
+    });
+
+}
+
 app.post('/webhook', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     if (req.body.queryResult.intent.displayName === "add_symptoms") {
@@ -132,6 +193,12 @@ app.post('/webhook', function (req, res) {
     }
     else if (req.body.queryResult.intent.displayName === "learn_more") {
         learnMore(req.body, res);
+    }
+    else if (req.body.queryResult.intent.displayName === "call_doctor") {
+        callDoctor(req.body, res);
+    }
+    else if (req.body.queryResult.intent.displayName === "test") {
+        res.send(JSON.stringify({ 'fulfillmentText': "D'accord nous allons essayer de vous mettre en relation avec le " + req.body.queryResult.outputContexts[2].parameters.text}));
     }
     else
         res.send(JSON.stringify({ 'fulfillmentText': "unknown intent"}));
