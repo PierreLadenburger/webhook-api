@@ -31,9 +31,19 @@ function addSymptoms(dialogflowRequest, res) {
                 answer += 'et '
             }
         }
-        answer += ". Avez-vous d'autres symptômes? Si vous les avez tous listés, vous pouvez me demander de vous diagnostiquer."
-        res.send(JSON.stringify({ 'fulfillmentText': answer}));
-        return;
+        answer += ". Avez-vous d'autres symptômes? Si vous les avez tous listés, vous pouvez me demander de vous diagnostiquer.";
+        res.send(JSON.stringify({
+            'fulfillmentText': answer,
+            "outputContexts": [
+                {
+                    "name": "projects/${PROJECT_ID}/agent/sessions/${SESSION_ID}/contexts/none",
+                    "lifespanCount": 5,
+                    "parameters": {
+                        "uid": "test"
+                    }
+                }
+            ]
+        }));
     })
 }
 
@@ -60,7 +70,6 @@ function resetSession(dialogflowRequest, res) {
             answer = "Vous ne m'avez renseigné aucun symptôme, je n'ai rien à réinitialiser."
         }
         res.send(JSON.stringify({ 'fulfillmentText': answer}));
-        return;
     })
 }
 
@@ -89,7 +98,6 @@ function diagnose(dialogflowRequest, res) {
             answer = "Vous avez possiblement " + result.pronom + " " + result.nom + ". Si vous voulez en savoir plus sur cette maladie, demandez moi. Vous pouvez me lister d'autres symptômes si vous en avez oublié, ou vous pouvez me demander de les réinitialiser.";
         }
         res.send(JSON.stringify({ 'fulfillmentText': answer}));
-        return;
     })
 }
 
@@ -112,14 +120,47 @@ function learnMore(dialogflowRequest, res) {
         result = JSON.parse(response.body);
         for (var i = 0; i < result.length; i++) {
             console.log(result[i]);
-            res.send(JSON.stringify({ 'fulfillmentText': result[i].description, 'payload': {'google': {'expectUserResponse': true, 'richResponse': {'items': [{'simpleResponse': {'textToSpeech': result[i].description}}, {'basicCard': {'title': result[i].nom.replace(/(\b\w)/gi,function(m){return m.toUpperCase();}), 'image': { 'url': 'http://eip.epitech.eu/2020/homedoc/img/logo.png',
-                                        'accessibilityText' : 'LOGO GOOGLE', 'height': 650}, 'buttons': [{'title': 'Voir la fiche', 'openUrlAction': {'url': 'http://eip.epitech.eu/2020/homedoc/img/resultat.png'}}], 'imageDisplayOptions': 'WHITE'}}]}}}}));
+            res.send(JSON.stringify({
+                'fulfillmentText': result[i].description,
+                'payload': {
+                    'google': {
+                        'expectUserResponse': true,
+                        'richResponse': {
+                            'items': [
+                                {
+                                    'simpleResponse': {
+                                        'textToSpeech': result[i].description
+                                    }
+                                },
+                                {
+                                    'basicCard': {
+                                        'title': result[i].nom.replace(/(\b\w)/gi,function(m){return m.toUpperCase();}),
+                                        'image': {
+                                            'url': 'http://eip.epitech.eu/2020/homedoc/img/logo.png',
+                                            'accessibilityText' : 'LOGO GOOGLE',
+                                            'height': 650
+                                        },
+                                        'buttons': [
+                                            {
+                                                'title': 'Voir la fiche',
+                                                'openUrlAction': {
+                                                    'url': 'http://eip.epitech.eu/2020/homedoc/img/resultat.png'
+                                                }
+                                            }
+                                        ],
+                                        'imageDisplayOptions': 'WHITE'
+                                     }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }));
         }
-        return;
     })
 }
 
-function callDoctor(dialogflowRequest, res) {
+function doctorsList(dialogflowRequest, res) {
     var requestOptions = {
         uri: "https://api.homedoc.fr/getConnectedDoctors",
         method: 'GET',
@@ -142,42 +183,107 @@ function callDoctor(dialogflowRequest, res) {
                 },
                 description: "test",
                 image: {
-                    "url": "https://www.homedoc.fr/icone_docteur.png",
+                    "url": "https://www.homedoc.fr/logo-medecin2.png",
                     "accessibilityText": "Image alternate text"
                 },
                 title: "Docteur " + result.connected[i].lastname + " " + result.connected[i].firstname
             });
         }
-        res.send(JSON.stringify({
-            "payload": {
-                "google": {
-                    "expectUserResponse": true,
-                    "systemIntent": {
-                        "intent": "actions.intent.OPTION",
-                        "data": {
-                            "@type": "type.googleapis.com/google.actions.v2.OptionValueSpec",
-                            "listSelect": {
-                                "items": items
-                            }
-                        }
-                    },
-                    "richResponse": {
-                        "items": [
-                            {
-                                "simpleResponse": {
-                                    "textToSpeech": "Voici une liste de médecins disponibles"
+        if (items.length >= 2) {
+            res.send(JSON.stringify({
+                'fulfillmentText': "Voici une listes de médecins disponibles",
+                "payload": {
+                    "google": {
+                        "expectUserResponse": true,
+                        "systemIntent": {
+                            "intent": "actions.intent.OPTION",
+                            "data": {
+                                "@type": "type.googleapis.com/google.actions.v2.OptionValueSpec",
+                                "listSelect": {
+                                    "items": items
                                 }
                             }
-                        ]
+                        },
+                        "richResponse": {
+                            "items": [
+                                {
+                                    "simpleResponse": {
+                                        "textToSpeech": "Voici une liste de médecins disponibles",
+                                        "displayText": "Voici une liste de médecins disponibles"
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
-            }
-
-
-
-        }))
+            }))
+        } else {
+            res.send(JSON.stringify({
+                'fulfillmentText': "Voici un médecin disponible",
+                'payload': {
+                    'google': {
+                        'expectUserResponse': true,
+                        'richResponse': {
+                            'items': [
+                                {
+                                    'simpleResponse': {
+                                        'textToSpeech': "Voici un médecin disponible",
+                                        'displayText': "Voici un médecin disponible"
+                                    }
+                                },
+                                {
+                                    'basicCard': {
+                                        'title': 'TEST',
+                                        'image': {
+                                            'url': 'https://www.homedoc.fr/logo-medecin2.png',
+                                            'accessibilityText' : 'LOGO GOOGLE',
+                                            'height': 650
+                                        },
+                                        'buttons': [
+                                            {
+                                                'title': 'Voir la fiche',
+                                                'openUrlAction': {
+                                                    'url': 'http://eip.epitech.eu/2020/homedoc/img/resultat.png'
+                                                }
+                                            }
+                                        ],
+                                        'imageDisplayOptions': 'WHITE'
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }));
+        }
     });
+}
 
+function callDoctor(dialogflowRequest, res) {
+    var requestOptions = {
+        uri: "https://api.homedoc.fr/getConnectedDoctors",
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+    request(requestOptions, function(error, response) {
+        console.log('RESPONSE:');
+        var result = JSON.parse(response.body);
+        console.log(result.connected.length);
+        res.send(JSON.stringify({
+            'fulfillmentText': 'Le docteur ' + result.connected[0].lastname + ' est disponible',
+            "outputContexts": [
+                {
+                    "name": "projects/${PROJECT_ID}/agent/sessions/${SESSION_ID}/contexts/none",
+                    "lifespanCount": 5,
+                    "parameters": {
+                        "doctor_id": result.connected[0]._id
+                    }
+                }
+            ]
+        }));
+    });
 }
 
 app.post('/webhook', function (req, res) {
@@ -196,6 +302,9 @@ app.post('/webhook', function (req, res) {
     }
     else if (req.body.queryResult.intent.displayName === "call_doctor") {
         callDoctor(req.body, res);
+    }
+    else if (req.body.queryResult.intent.displayName === "doctors_list") {
+        doctorsList(req.body, res);
     }
     else if (req.body.queryResult.intent.displayName === "test") {
         res.send(JSON.stringify({ 'fulfillmentText': "D'accord nous allons essayer de vous mettre en relation avec le " + req.body.queryResult.outputContexts[2].parameters.text}));
