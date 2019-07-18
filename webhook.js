@@ -97,7 +97,7 @@ function diagnose(dialogflowRequest, res) {
       else {
         answer = "il est possible que vous ayez les maladies suivantes: ";
         for (var i = 1; i < result.length; i++) {
-          answer = answer + result.nom + ", ";  
+          answer = answer + result[i].nom + ", ";  
         }
         answer +=  "si vous ne m'avez pas renseigné tous les symptomes, vous pouvez en ajouter d'autres, si vous voulez en savoir plus sur une maladie, ou réinitialiser vos symptomes, demandez moi.";
       }
