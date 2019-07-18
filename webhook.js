@@ -76,30 +76,35 @@ function resetSession(dialogflowRequest, res) {
 
 function diagnose(dialogflowRequest, res) {
     var requestOptions = {
-        uri: apiUrl + '/diagnose/',
-        method: 'GET',
-        qs: {
-            'sessionId': dialogflowRequest.session
-        },
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
+      uri: apiUrl + '/diagnose/',
+      method: 'GET',
+      qs: {
+        'sessionId': dialogflowRequest.session
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
     request(requestOptions, function(error, response) {
-        console.log ("============ THE DOCTOR SAID ============")
-        console.log(response.body);
-        var result;
-        result = JSON.parse(response.body);
-        var answer;
-        if (result.error != undefined) {
-            answer = "Vous ne m'avez renseigné aucun symptôme, je ne peux pas vous diagnostiquer."
+      console.log ("============ THE DOCTOR SAID ============")
+      console.log(response.body);
+      var result;
+      result = JSON.parse(response.body);
+      var answer;
+      if (result.error != undefined) {
+        answer = "Vous ne m'avez renseigné aucun symptôme, je ne peux pas vous diagnostiquer."
+      }
+      else {
+        answer = "il est possible que vous ayez les maladies suivantes: ";
+        for (var i = 1; i < result.length; i++) {
+          answer = answer + result.nom + ", ";  
         }
-        else {
-            answer = "Vous avez possiblement " + result.pronom + " " + result.nom + ". Si vous voulez en savoir plus sur cette maladie, demandez moi. Vous pouvez me lister d'autres symptômes si vous en avez oublié, ou vous pouvez me demander de les réinitialiser.";
-        }
-        res.send(JSON.stringify({ 'fulfillmentText': answer}));
+        answer +=  "si vous ne m'avez pas renseigné tous les symptomes, vous pouvez en ajouter d'autres, si vous voulez en savoir plus sur une maladie, ou réinitialiser vos symptomes, demandez moi.";
+      }
+      res.send(JSON.stringify({ 'fulfillmentText': answer }));
+      return;
     })
-}
+  }
 
 function learnMore(dialogflowRequest, res) {
 //    console.log(dialogflowRequest.result.parameters.Maladies)
