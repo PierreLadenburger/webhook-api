@@ -129,7 +129,8 @@ function learnMore(dialogflowRequest, res) {
                             'items': [
                                 {
                                     'simpleResponse': {
-                                        'textToSpeech': result[i].description
+                                        'textToSpeech': result[i].description,
+                                        'displayText': result[i].description
                                     }
                                 },
                                 {
